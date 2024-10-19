@@ -22,7 +22,7 @@ def generate_video():
         with lock:
             success, frame = camera.read()
             output_frame, generation_time = frame_processor(frame)
-            print(generation_time)
+            # print(generation_time)
 
 def feed():
     global output_frame, lock

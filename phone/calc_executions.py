@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from flask import make_response, Flask, Response
 
-from phone.settings import WEBCAM_IP
+from settings import WEBCAM_IP
 from processor import frame_processor
 
 if __name__ == '__main__':
