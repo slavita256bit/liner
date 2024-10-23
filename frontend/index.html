@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Streaming</title>
+</head>
+<body>
+    <h1>Streaming OpenCV Image to Browser</h1>
+    <img id="stream" src="" alt="Video Stream" />
+
+    <script>
+        const socket = new WebSocket('ws://192.168.1.151:8000');
+
+        socket.onmessage = function(event) {
+            // Receive base64 image and set it to the image tag
+            document.getElementById('stream').src = 'data:image/jpeg;base64,' + event.data;
+        };
+    </script>
+</body>
+</html>

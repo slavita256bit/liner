@@ -5,16 +5,18 @@ import cv2
 import numpy as np
 from flask import make_response, Flask, Response
 
-from settings import WEBCAM_IP
+from threaded_camera import ThreadedCamera
+from settings import WEBCAM_URL
 from processor import frame_processor
 
 if __name__ == '__main__':
     num_repetitions = 100
     start_time = time.time()
-    cap = cv2.VideoCapture(WEBCAM_IP)
+    camera = ThreadedCamera()
+    while camera.frame is None:
+        time.sleep(0.1)
     for _ in range(num_repetitions):
-        ret, frame = cap.read()
-        image, etime = frame_processor(frame)
+        image = camera.frame
     end_time = time.time()
     total_time = end_time - start_time
     average_time_per_execution = total_time / num_repetitions

@@ -1,47 +1,30 @@
-# import socket
-import asyncio
-import threading
-import time
-import urllib
-
 import cv2
-import numpy as np
-from flask import make_response, Flask, Response, render_template
+import base64
+import asyncio
+import websockets
 
-from processor import frame_processor
-from settings import WEBCAM_IP
+from processor import ThreadedProcessor
+from threaded_camera import ThreadedCamera
 
-output_frame = None
-lock = threading.Lock()
-camera = cv2.VideoCapture(WEBCAM_IP)
-app = Flask(__name__)
 
-def generate_video():
-    global output_frame, lock
+stream_fps = 30
+calc_fps = 30
+camera = ThreadedCamera()
+processor = ThreadedProcessor(camera, calc_fps)
+print('Lets go!')
+
+async def stream(websocket):
     while True:
-        with lock:
-            success, frame = camera.read()
-            output_frame, generation_time = frame_processor(frame)
-            # print(generation_time)
+        if processor.frame is not None:
+            frame = cv2.cvtColor(processor.frame, cv2.COLOR_GRAY2BGR)
+            _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+            jpg_as_text = base64.b64encode(buffer).decode('utf-8')
 
-def feed():
-    global output_frame, lock
-    while True:
-        with lock:
-            if output_frame is None:
-                continue
-            (flag, encoded_image) = cv2.imencode(".jpg", output_frame)
-            if not flag:
-                continue
-        yield b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + bytearray(encoded_image) + b'\r\n'
+            if websocket.open:
+                await websocket.send(jpg_as_text)
 
-@app.route('/')
-def get_index():
-    return render_template('index.html')
+        await asyncio.sleep(1 / stream_fps)
 
-@app.route("/video_feed")
-def video_feed():
-    return Response(feed(), mimetype ="multipart/x-mixed-replace; boundary=frame")
-
-
-threading.Thread(target=generate_video).start()
+start_server = websockets.serve(stream, "192.168.1.151", 8000)
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()
