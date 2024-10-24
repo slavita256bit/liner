@@ -7,7 +7,7 @@ from flask import make_response, Flask, Response
 
 from threaded_camera import ThreadedCamera
 from settings import WEBCAM_URL
-from processor import frame_processor
+from threaded_processor import frame_processor
 
 if __name__ == '__main__':
     num_repetitions = 100
