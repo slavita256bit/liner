@@ -3,6 +3,7 @@ import base64
 import asyncio
 import websockets
 
+import signs_processor
 from threaded_processor import ThreadedProcessor
 from threaded_camera import ThreadedCamera
 
@@ -16,8 +17,8 @@ print('Lets go!')
 async def stream(websocket):
     while True:
         if processor.frame is not None:
-            # frame = processor.frame
-            frame = cv2.cvtColor(processor.frame, cv2.COLOR_GRAY2BGR)
+            frame = processor.frame
+            # frame = cv2.cvtColor(processor.frame, cv2.COLOR_GRAY2BGR)
             _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
             jpg_as_text = base64.b64encode(buffer).decode('utf-8')
 
@@ -26,6 +27,6 @@ async def stream(websocket):
 
         await asyncio.sleep(1 / stream_fps)
 
-start_server = websockets.serve(stream, "192.168.199.122", 8000)
+start_server = websockets.serve(stream, "192.168.105.230", 8000)
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
