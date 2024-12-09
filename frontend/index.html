@@ -1,5 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+<style>
+    .row {
+        display: flex;
+        flex-direction: row;
+        gap: 10px
+    }
+</style>
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,12 +15,33 @@
 </head>
 <body>
     <img id="stream" src="" alt="Video Stream" />
+    <div class="row">
+        <p>Curvature: </p>
+        <p id="curvature"></p>
+    </div>
+    <div class="row">
+        <p>Delta: </p>
+        <p id="delta"></p>
+    </div>
+    <div class="row">
+        <p>Time to process: </p>
+        <p id="time"></p>
+    </div>
+    <div class="row">
+        <p>FPS: </p>
+        <p id="fps"></p>
+    </div>
 
     <script>
-        const socket = new WebSocket('ws://192.168.105.230:8000');
+        const socket = new WebSocket('ws://192.168.138.112:8000');
 
         socket.onmessage = function(event) {
-            document.getElementById('stream').src = 'data:image/jpeg;base64,' + event.data;
+            data = JSON.parse(event.data)
+            document.getElementById('stream').src = 'data:image/jpeg;base64,' + data['img'];
+            document.getElementById('time').innerText = data['time'];
+            document.getElementById('fps').innerText = Math.floor(60 / data['time']);
+            document.getElementById('curvature').innerText = data['curvature'];
+            document.getElementById('delta').innerText = data['delta'];
         };
     </script>
 </body>
