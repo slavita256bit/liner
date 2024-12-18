@@ -15,7 +15,7 @@ class ThreadedCamera(object):
 
         print('Waiting for camera...')
         while self.frame is None:
-            time.sleep(0.1)
+            time.sleep(0.5)
         print('Camera is ready.')
 
     def update(self):

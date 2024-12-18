@@ -1,15 +1,13 @@
 import time
 from threading import Thread
 
-import cv2
-import numpy as np
-
-from signs_algorithm import sign_process
+from road_processor import road_processor
+from signs_processor import signs_processor
 from threaded_camera import ThreadedCamera
 
 
 class ThreadedProcessor:
-    def __init__(self, camera: ThreadedCamera):
+    def __init__(self, camera: ThreadedCamera,):
         self.camera = camera
 
         self.thread = Thread(target=self.update, args=())
@@ -20,5 +18,5 @@ class ThreadedProcessor:
     def update(self):
         while True:
             if self.camera.frame is not None:
-                self.frame = sign_process(self.camera.frame)
+                self.frame = road_processor(self.camera.frame)
 
