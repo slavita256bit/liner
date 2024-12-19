@@ -37,15 +37,15 @@ motor = MediumMotor(OUTPUT_D)
 #     motor.on_for_degrees(SpeedPercent(50 * direction), abs(angle - (motor.degrees - start_deg)))
 
 
-while True:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(('localhost', 8765))
-        print('Connected')
-        while True:
-            # s.sendall(b'go')
-            data = s.recv(1024)
-            # move(data)
-            print(data.decode("utf-8"))
-            time.sleep(0.05)
-        time.sleep(0.5)
+# while True:
+    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    #     s.connect(('localhost', 8765))
+    #     print('Connected')
+    #     while True:
+    #         # s.sendall(b'go')
+    #         data = s.recv(1024)
+    #         # move(data)
+    #         print(data.decode("utf-8"))
+    #         time.sleep(0.05)
+    #     time.sleep(0.5)
 
