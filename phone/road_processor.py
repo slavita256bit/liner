@@ -17,9 +17,10 @@ def region_selection(image):
     else:
         ignore_mask_color = 255
     rows, cols = image.shape[:2]
-    bottom_left  = [cols * 0, rows * 0.7]
-    top_left     = [cols * 0, rows * 0]
-    bottom_right = [cols * 1, rows * 0.7]
+    print(image.shape)
+    bottom_left  = [cols * 0.3, rows * 1]
+    top_left     = [cols * 0.3, rows * 0]
+    bottom_right = [cols * 1, rows * 1]
     top_right    = [cols * 1, rows * 0]
     vertices = np.array([[bottom_left, top_left, top_right, bottom_right]], dtype=np.int32)
     cv2.fillPoly(mask, vertices, ignore_mask_color)
@@ -33,7 +34,7 @@ def hough_transform(image):
     # Angle resolution of the accumulator in radians.
     theta = np.pi / 180
     # Only lines that are greater than threshold will be returned.
-    threshold = 20
+    threshold = 10
     # Line segments shorter than that are rejected.
     minLineLength = 6
     # Maximum allowed gap between points on the same line to link them
@@ -45,7 +46,7 @@ def hough_transform(image):
 
 
 def make_bird_view(image):
-    x_offset = 98
+    x_offset = 100
     y_offset = 75
     src_points = np.float32([
         [x_offset, 0],  # Top-left corner
@@ -81,7 +82,6 @@ def road_processor(rgb_image):
     gray_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2GRAY)
 
     canny = cv2.Canny(gray_image, 220, 255)
-    # region = canny
     lines = hough_transform(canny)
 
     center_x = 205
@@ -99,7 +99,7 @@ def road_processor(rgb_image):
                 my1 = min(my1, y1)
                 my2 = max(my2, y2)
 
-            if abs(mx2 - mx1) > abs(my2 - my1):
+            if abs(mx2 - mx1) - abs(my2 - my1) > 10:
                 continue
 
             if mx1 < center_x:

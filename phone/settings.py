@@ -1,2 +1,2 @@
-PHONE_IP = '192.168.100.24'
+PHONE_IP = '192.168.2.97'
 WEBCAM_URL = f'http://{PHONE_IP}:8080/video'
