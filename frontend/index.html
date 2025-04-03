@@ -33,7 +33,7 @@
     </div>
 
     <script>
-        const socket = new WebSocket('ws://192.168.100.24:8000');
+        const socket = new WebSocket('ws://192.168.156.149:8000');
 
         socket.onmessage = function(event) {
             data = JSON.parse(event.data)
