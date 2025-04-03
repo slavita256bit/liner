@@ -11,6 +11,7 @@ class ThreadedCamera(object):
 
         self.frame = None
         self.thread = Thread(target=self.update, args=())
+        self.thread.running = True
         self.thread.start()
 
         print('Waiting for camera...')
@@ -19,6 +20,9 @@ class ThreadedCamera(object):
         print('Camera is ready.')
 
     def update(self):
-        while True:
+        while getattr(self.thread, "running", True):
             if self.capture.isOpened():
                 _, self.frame = self.capture.read()
+
+    def stop(self):
+        self.thread.running = False

@@ -11,12 +11,16 @@ class ThreadedProcessor:
         self.camera = camera
 
         self.thread = Thread(target=self.update, args=())
+        self.thread.running = True
         self.thread.start()
 
         self.frame = None
 
     def update(self):
-        while True:
+        while getattr(self.thread, "running", True):
             if self.camera.frame is not None:
                 self.frame = road_processor(self.camera.frame)
+
+    def stop(self):
+        self.thread.running = False
 

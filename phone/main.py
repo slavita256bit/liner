@@ -1,5 +1,6 @@
 import json
 import socket
+from asyncio import CancelledError
 
 import cv2
 import base64
@@ -44,9 +45,15 @@ async def stream(websocket):
 
 
 async def main():
-    async with websockets.serve(stream, PHONE_IP, 8000):
-        print("WebSocket server started...")
-        await asyncio.Future()
+    try:
+        async with websockets.serve(stream, PHONE_IP, 8000):
+            print("WebSocket server started.")
+            await asyncio.Future()
+    except CancelledError:
+        print("Stopping...")
+        processor.stop()
+        camera.stop()
+        print("Bue!")
 
 if __name__ == "__main__":
     asyncio.run(main())
