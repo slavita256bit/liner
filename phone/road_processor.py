@@ -16,12 +16,14 @@ def region_selection(image):
         ignore_mask_color = (255,) * channel_count
     else:
         ignore_mask_color = 255
+
     rows, cols = image.shape[:2]
-    print(image.shape)
+
     bottom_left  = [cols * 0.3, rows * 1]
     top_left     = [cols * 0.3, rows * 0]
     bottom_right = [cols * 1, rows * 1]
     top_right    = [cols * 1, rows * 0]
+
     vertices = np.array([[bottom_left, top_left, top_right, bottom_right]], dtype=np.int32)
     cv2.fillPoly(mask, vertices, ignore_mask_color)
     masked_image = cv2.bitwise_and(image, mask)
@@ -46,8 +48,8 @@ def make_bird_view(image):
 
     # Define the destination points (where you want the source points to map to)
     # This should be a rectangle
-    target_width = 320
-    target_height = 240
+    target_width = width
+    target_height = height
     dst_points = np.float32([
         [0, 0],  # Top-left corner
         [target_width, 0],  # Top-right corner
@@ -63,116 +65,81 @@ def make_bird_view(image):
     return bird_view
 
 
-def compute_curvature(lines, image_shape, xm_per_pix=1.0, ym_per_pix=1.0):
-    if lines is None:
-        return None
-
-    # Collect all endpoints of the detected line segments.
-    points = []
-    for line in lines:
-        for x1, y1, x2, y2 in line:
-            points.append((x1, y1))
-            points.append((x2, y2))
-
-    # Check if we have enough points to fit a polynomial.
-    if len(points) < 10:
-        return None
-
-    points = np.array(points)
-    x = points[:, 0]
-    y = points[:, 1]
-
-    # If needed, convert from pixel space to real-world space.
-    x = x * xm_per_pix
-    y = y * ym_per_pix
-
-    # Fit a second order polynomial: x = A*y^2 + B*y + C.
-    fit = np.polyfit(y, x, 2)
-    A, B, _ = fit
-
-    # Evaluate curvature at the bottom of the image.
-    # In a bird's-eye view, y typically increases from top to bottom.
-    y_eval = image_shape[0] * ym_per_pix
-
-    # Calculate the curvature using the formula:
-    # R = (1 + (2*A*y_eval + B)^2)^(3/2) / |2*A|
-    curvature = ((1 + (2 * A * y_eval + B) ** 2) ** 1.5) / np.abs(2 * A)
-    return curvature
+import cv2
+import numpy as np
 
 
-def draw_debug_info(image, lines):
+def find_black_candidates(img, yl, yr, step, radius, black_threshold, max_x_dist):
+    merged_points = []  # To store the merged (x, y) candidates.
+    height, width = img.shape
+
+    # Process rows from yl to yr with given step
+    for y in range(yl, min(yr, height), step):
+        candidates = []  # Temporary list for candidate x positions on this y-line
+
+        # Process every x in the row
+        for x in range(width):
+            # Define the square boundaries ensuring we don't go out of image bounds.
+            x_start = max(0, x - radius)
+            x_end = min(width, x + radius + 1)
+            y_start = max(0, y - radius)
+            y_end = min(height, y + radius + 1)
+
+            # Extract the region and compute the average intensity.
+            region = img[y_start:y_end, x_start:x_end]
+            avg_intensity = np.mean(region)
+
+            # If the region is dark enough, mark x as a candidate.
+            if avg_intensity < black_threshold:
+                candidates.append(x)
+
+        # Merge candidates that are within max_x_dist
+        if candidates:
+            merged_candidates = []
+            # Initialize the first group
+            group = [candidates[0]]
+
+            for curr in candidates[1:]:
+                # If the distance from the last candidate in the group is small enough, add to group
+                if curr - group[-1] <= max_x_dist:
+                    group.append(curr)
+                else:
+                    # Merge the current group: average x coordinate
+                    merged_candidates.append(int(np.mean(group)))
+                    group = [curr]
+            # Merge the final group
+            if group:
+                merged_candidates.append(int(np.mean(group)))
+
+            # Append merged candidates with the current y coordinate.
+            for merged_x in merged_candidates:
+                merged_points.append((merged_x, y))
+
+    return merged_points
+
+
+def draw_debug_info(image, lane_points):
     debug_image = image.copy()
 
-    # Draw detected lines
-    if lines is not None:
-        for line in lines:
-            for x1, y1, x2, y2 in line:
-                cv2.line(debug_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    # Draw the points on the image (for visualization)
+    for point in lane_points:
+        cv2.circle(debug_image, tuple(point), 3, (0, 255, 0), -1)  # Draw green circles
 
     return debug_image
 
 
 def road_processor(rgb_image):
     start_time = time.time()
-
     # rgb_image = region_selection(rgb_image)
-    rgb_image = make_bird_view(rgb_image)
+    # canny = cv2.Canny(gray_image, 220, 255)
+    # lines = hough_transform(canny)
+
     gray_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2GRAY)
 
-    canny = cv2.Canny(gray_image, 220, 255)
-    lines = hough_transform(canny)
+    # rgb_image = make_bird_view(rgb_image)
 
-    # center_x = 205
-    # left_lanes = []
-    # right_lanes = []
-    #
-    # if lines is not None:
-    #     for line in lines:
-    #         color = (random.randint(0, 256), random.randint(0, 256), random.randint(0, 256))
-    #
-    #         mx1, my1, mx2, my2 = line[0]
-    #         for x1, y1, x2, y2 in line:
-    #             mx1 = min(mx1, x1)
-    #             mx2 = max(mx2, x2)
-    #             my1 = min(my1, y1)
-    #             my2 = max(my2, y2)
-    #
-    #         if abs(mx2 - mx1) - abs(my2 - my1) > 10:
-    #             continue
-    #
-    #         if mx1 < center_x:
-    #             left_lanes.append(mx1)
-    #         else:
-    #             right_lanes.append(mx1)
-    #
-    #         cv2.line(rgb_image, (mx1, my1), (mx2, my2), color, 2)
-    #
-    # not_exist_offset = 200
-    #
-    # if len(left_lanes) == 0:
-    #     avg_left_lane = center_x - not_exist_offset
-    # else:
-    #     avg_left_lane = sum(left_lanes) / len(left_lanes)
-    #
-    # if len(right_lanes) == 0:
-    #     avg_right_lane = center_x + not_exist_offset
-    # else:
-    #     avg_right_lane = sum(right_lanes) / len(right_lanes)
-    #
-    # pt1 = (center_x - 10, height)
-    # pt2 = (center_x, height - 10)
-    # pt3 = (center_x + 10, height)
-    #
-    # triangle_cnt = np.array([pt1, pt2, pt3])
-    #
-    # cv2.drawContours(rgb_image, [triangle_cnt], 0, (0, 255, 0), -1)
-    #
-    # delta = (avg_right_lane + avg_left_lane) // 2 - center_x
-    #
-    # cv2.line(rgb_image, (int(delta + center_x), height), (int(delta + center_x), height - 100), (0, 0, 255), 2)
+    points = find_black_candidates(gray_image, 0, height, 10, 5, 20, 10)
 
-    curvature = compute_curvature(lines, rgb_image.shape)
+    debug_image = draw_debug_info(rgb_image, points)
 
-    debug_image = draw_debug_info(rgb_image, lines)
-
-    return curvature, 0, debug_image, time.time() - start_time
+    return 0, 0, debug_image, time.time() - start_time
