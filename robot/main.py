@@ -99,10 +99,15 @@ def move(angle):
 
 try:
     while True:
-        delta = float(parse_redis_response(send_redis_command("GET delta")))
+        delta = float(parse_redis_response(send_redis_command("GET delta"))) / 10
         print(delta, motor.degrees - start_deg)
-        move(delta)
+        if delta < 23:
+            move(0)
+        else:
+            move(delta)
 except KeyboardInterrupt:
+    print("Bye!")
     motor1.off()
     motor2.off()
+    motor.off()
 

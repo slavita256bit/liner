@@ -18,8 +18,8 @@ def region_selection(image):
 
     rows, cols = image.shape[:2]
 
-    bottom_left  = [cols * 0.3, rows * 1]
-    top_left     = [cols * 0.3, rows * 0]
+    bottom_left  = [cols * 0, rows * 1]
+    top_left     = [cols * 0, rows * 0]
     bottom_right = [cols * 1, rows * 1]
     top_right    = [cols * 1, rows * 0]
 

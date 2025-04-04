@@ -20,50 +20,47 @@ def compute_angle(p1, p2):
     return math.degrees(angle_rad)
 
 
-import numpy as np
-
 def find_candidates(img, yl, yr, step, radius, color_threshold, max_x_dist):
-    merged_points = []  # To store the merged (x, y) candidates.
-    height, width, _ = img.shape  # Extract dimensions
+    """
+    Optimized candidate finder that uses a pre-blurred image to compute local average color.
+
+    Parameters:
+        img (np.ndarray): Input image (BGR).
+        yl (int): Starting y coordinate.
+        yr (int): Ending y coordinate.
+        step (int): Step size for iterating y values.
+        radius (int): Radius of the square window.
+        color_threshold (array-like): Threshold for each channel.
+        max_x_dist (int): Maximum distance between candidate x positions for merging.
+
+    Returns:
+        list: List of merged candidate points as (x, y) tuples.
+    """
+    merged_points = []
+    height, width, _ = img.shape
+
+    # Precompute blurred image with kernel size (2*radius+1, 2*radius+1)
+    kernel_size = (2 * radius + 1, 2 * radius + 1)
+    blurred = cv2.blur(img, kernel_size)
 
     # Process rows from yl to yr with given step
     for y in range(yl, min(yr, height), step):
-        candidates = []  # Temporary list for candidate x positions on this y-line
+        # Get the blurred row; shape: (width, channels)
+        row = blurred[y]
+        # Create a boolean mask where all channels exceed the threshold.
+        # Assuming color_threshold is an array-like of 3 values.
+        mask = np.all(row > color_threshold, axis=1)
+        # Find candidate x indices using the mask
+        candidates = np.where(mask)[0]
+        if candidates.size == 0:
+            continue
 
-        # Process every x in the row
-        for x in range(width):
-            # Define the square boundaries ensuring we don't go out of image bounds.
-            x_start = max(0, x - radius)
-            x_end = min(width, x + radius + 1)
-            y_start = max(0, y - radius)
-            y_end = min(height, y + radius + 1)
-
-            # Extract the region and compute the average intensity across all channels.
-            region = img[y_start:y_end, x_start:x_end]
-            avg_rgb = np.mean(region, axis=(0, 1))  # Mean over the region, keeping RGB channels
-
-            # If all three channels are above the threshold, consider it white
-            if np.all(avg_rgb > color_threshold):
-                candidates.append(x)
-
-        # Merge candidates that are within max_x_dist
-        if candidates:
-            merged_candidates = []
-            group = [candidates[0]]
-
-            for curr in candidates[1:]:
-                if curr - group[-1] <= max_x_dist:
-                    group.append(curr)
-                else:
-                    merged_candidates.append(int(np.mean(group)))
-                    group = [curr]
-
-            if group:
-                merged_candidates.append(int(np.mean(group)))
-
-            # Append merged candidates with the current y coordinate.
-            for merged_x in merged_candidates:
-                merged_points.append((merged_x, y))
+        # Merge candidates: group x values that are close together (difference <= max_x_dist)
+        diff = np.diff(candidates)
+        groups = np.split(candidates, np.where(diff > max_x_dist)[0] + 1)
+        for group in groups:
+            merged_x = int(np.mean(group))
+            merged_points.append((merged_x, y))
 
     return merged_points
 
