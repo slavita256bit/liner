@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 
 from camera_transform import make_bird_view, region_selection
-from curvature_finder import compute_curvature
+from curvature_computing import compute_curvature
 from points_finder import find_candidates, build_lane_components, draw_components
 from settings import WIDTH, HEIGHT
 

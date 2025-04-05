@@ -1,60 +1,12 @@
-#!/usr/bin/env python3
+#!/usr/bin/env micropython
 
-import socket
 import time
 
 from ev3dev2.led import Leds
 from ev3dev2.motor import MediumMotor, OUTPUT_A, OUTPUT_B, OUTPUT_C, OUTPUT_D, SpeedPercent, MoveTank
 
-
-def send_redis_command(command, host='127.0.0.1', port=6379):
-    """
-    Sends a raw Redis command using the RESP protocol.
-    """
-    # Connect to Redis
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect((host, port))
-
-    # Convert the command into RESP format
-    command_parts = command.split()
-    resp_command = "*{}\r\n".format(len(command_parts))
-    for part in command_parts:
-        resp_command += "${}\r\n{}\r\n".format(len(part), part)
-
-    # Send the command
-    client.sendall(resp_command.encode())
-
-    # Read the response
-    response = client.recv(4096).decode()
-    client.close()
-
-    return response
-
-
-def parse_redis_response(response):
-    """
-    Parses a RESP response and extracts the actual value.
-    """
-    # Check the first character to identify the type of response
-    if response.startswith('+'):  # Simple string
-        return response[1:].strip()
-    elif response.startswith('$'):  # Bulk string
-        # Example response: "$7\r\nmyvalue\r\n"
-        lines = response.split("\r\n")
-        if lines[0] == "$-1":  # Null bulk string
-            return None
-        return lines[1]  # Actual value is in the second line
-    elif response.startswith(':'):  # Integer
-        return int(response[1:].strip())
-    elif response.startswith('-'):  # Error
-        return "Error: {}".format(response[1:].strip())
-    else:
-        return "Unknown response: {}".format(response.strip())
-
-# # Updated example usage
-# response = send_redis_command("SET mykey myvalue")
-# print("SET Response:", parse_redis_response(response))
-
+from pid import PID
+from redis_communication import send_redis_command, parse_redis_response
 
 leds = Leds()
 motor1 = MediumMotor(OUTPUT_B)
@@ -80,34 +32,30 @@ time.sleep(1)
 motor1.on(SpeedPercent(-10))
 motor2.on(SpeedPercent(-10))
 
-def move(angle):
+pid = PID(1.0, 0, 0, setpoint=0, sample_time=100, output_limits=(-min_max_deg, min_max_deg))
+
+
+def move(new_angle):
     cur_angle = start_deg - motor.degrees
-    delta = min(abs(cur_angle - angle), min_max_deg)
+    motor_delta = min(abs(cur_angle - new_angle), min_max_deg)
 
-    direction = 1 if angle < cur_angle else -1
+    direction = 1 if new_angle < cur_angle else -1
     # print(cur_angle, delta, direction)
-    motor.on_for_degrees(SpeedPercent(100 * direction), delta)
+    motor.on_for_degrees(SpeedPercent(100 * direction), motor_delta)
 
-
-# move(-40)
-# time.sleep(2)
-# move(40)
-# time.sleep(2)
-# move(70)
-# time.sleep(2)
-# move(-70)
 
 try:
     while True:
-        delta = float(parse_redis_response(send_redis_command("GET delta"))) / 10
-        print(delta, motor.degrees - start_deg)
-        if delta < 23:
-            move(0)
-        else:
-            move(delta)
+        response = send_redis_command("MGET delta curvature")
+        delta, curvature = parse_redis_response(response)
+
+        angle = delta
+        move(angle)
 except KeyboardInterrupt:
-    print("Bye!")
+    print()
+    print("Off motors...")
     motor1.off()
     motor2.off()
     motor.off()
+    print("Bue!")
 

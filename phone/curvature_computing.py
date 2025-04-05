@@ -53,7 +53,7 @@ def compute_curvature(chain):
         if cross_product < 0:
             angle = -angle
 
-        total_angle_change += angle * p2[1]
+        total_angle_change += angle * (0.99 ** (p2[1] - HEIGHT)) / (0.99 ** (0 - HEIGHT))
         segment_count += 1
 
     return total_angle_change / segment_count if segment_count > 0 else 0
