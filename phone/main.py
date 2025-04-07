@@ -7,6 +7,7 @@ import base64
 import asyncio
 import redis
 import websockets
+from websockets import ConnectionClosedOK, ConnectionClosedError
 
 import signs_processor
 from settings import PHONE_IP
@@ -35,11 +36,16 @@ async def stream(websocket):
 
             json_string = json.dumps({
                 'img': jpg_as_text,
-                'time': str(time_used),
+                'time': float(time_used),
                 'curvature': curvature,
                 'delta': delta,
             })
-            await websocket.send(json_string)
+
+            try:
+                await websocket.send(json_string)
+            except (ConnectionClosedOK, ConnectionClosedError):
+                print("WebSocket connection closed.")
+                break
 
         await asyncio.sleep(1 / stream_fps)
 

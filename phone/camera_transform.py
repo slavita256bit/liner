@@ -18,9 +18,9 @@ def region_selection(image):
 
     rows, cols = image.shape[:2]
 
-    bottom_left  = [cols * 0, rows * 1]
+    bottom_left  = [cols * 0, rows * 0.8]
     top_left     = [cols * 0, rows * 0]
-    bottom_right = [cols * 1, rows * 1]
+    bottom_right = [cols * 1, rows * 0.8]
     top_right    = [cols * 1, rows * 0]
 
     vertices = np.array([[bottom_left, top_left, top_right, bottom_right]], dtype=np.int32)
@@ -36,8 +36,8 @@ def hough_transform(canny_img, rho=1, theta=np.pi/180, threshold=10, minLineLeng
 
 
 def make_bird_view(image):
-    x_offset = 50
-    y_offset = 25
+    x_offset = 80
+    y_offset = 80
     src_points = np.float32([
         [x_offset, 0],  # Top-left corner
         [WIDTH - x_offset, 0],  # Top-right corner

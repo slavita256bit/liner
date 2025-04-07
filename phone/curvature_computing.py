@@ -5,20 +5,10 @@ import time
 import cv2
 import numpy as np
 
-from dsu import DisjointSet
 from settings import WIDTH, HEIGHT
 
 
-def compute_curvature(chain):
-    """
-    Computes the signed average curvature of a given chain of connected points.
-
-    Parameters:
-        chain (list of tuples): List of (x, y) points representing a connected lane.
-ё
-    Returns:
-        float: Signed average curvature (in degrees). Positive for right turns, negative for left turns.
-    """
+def compute_curvature(chain, threshold_angle, max_angle_change, debug_image):
     if len(chain) < 3:
         return 0  # Too few points to calculate curvature
 
@@ -53,7 +43,11 @@ def compute_curvature(chain):
         if cross_product < 0:
             angle = -angle
 
-        total_angle_change += angle * (0.99 ** (p2[1] - HEIGHT)) / (0.99 ** (0 - HEIGHT))
-        segment_count += 1
+        if abs(angle) > threshold_angle:
+            mult = (p2[1] ** 0.5) / (HEIGHT ** 0.5)
+            # print(mult)
+            total_angle_change += angle / max_angle_change * mult
+            segment_count += 1
+            cv2.circle(debug_image, tuple(p2), 3, (255, 0, 255), -1)
 
     return total_angle_change / segment_count if segment_count > 0 else 0

@@ -6,19 +6,13 @@ import cv2
 import numpy as np
 
 from camera_transform import make_bird_view, region_selection
+from chains_generator import build_lane_chains
 from curvature_computing import compute_curvature
-from points_finder import find_candidates, build_lane_components, draw_components
-from settings import WIDTH, HEIGHT
-
-
-def draw_points(image, lane_points, color):
-    image = image.copy()
-
-    # Draw the points on the image (for visualization)
-    for point in lane_points:
-        cv2.circle(image, tuple(point), 3, color, -1)  # Draw green circles
-
-    return image
+from debug_drawings import draw_points, draw_chains, draw_robot_center_marker
+from filter_chains import filter_chains_by_robot_center
+from middle_chain import build_middle_chain
+from points_finder import find_candidates
+from settings import WIDTH, HEIGHT, ROBOT_X_CENTER
 
 
 def road_processor(rgb_image):
@@ -29,20 +23,36 @@ def road_processor(rgb_image):
 
     # gray_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2GRAY)
 
-    # rgb_image = make_bird_view(rgb_image)
+    rgb_image = make_bird_view(rgb_image)
 
     points = find_candidates(rgb_image, 0, HEIGHT, 5, 2, 150, 10)
-    debug_image = draw_points(rgb_image, points, (0, 255, 0))
+    debug_image = draw_points(rgb_image, points, (255, 100, 0))
 
-    components = build_lane_components(points, 50, 30, 8)
-    debug_image = draw_components(rgb_image, components)
+    max_angle_change = 40
+    chains = build_lane_chains(points, 65, 10, max_angle_change, 0)
+
+
+    chains, left_chain, right_chain = filter_chains_by_robot_center(chains)
+
+    # for chain in chains:
+    #     chain.sort(key=lambda pos: pos[1])
+    #     last_x, _ = chain[-1]
+    #     chain.append((last_x, HEIGHT))
+
+    draw_chains(debug_image, chains)
 
     avg_curvature = 0
-    for component in components:
-        avg_curvature += compute_curvature(component)
+    # for chain in chains:
+    #     avg_curvature += compute_curvature(chain)
+    #
+    # if len(chains) > 0:
+    #     avg_curvature /= len(chains)
 
-    if len(components) > 0:
-        avg_curvature /= len(components)
+    middle_chain = build_middle_chain(left_chain, right_chain, 0, WIDTH, 10, HEIGHT)
 
-    return avg_curvature, avg_curvature, debug_image, time.time() - start_time
+    draw_robot_center_marker(debug_image)
+
+    draw_chains(debug_image, [middle_chain], point_color=(0, 20, 100), line_color=(20, 100, 0))
+
+    return avg_curvature, 0, debug_image, time.time() - start_time
 

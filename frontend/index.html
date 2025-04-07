@@ -33,15 +33,15 @@
     </div>
 
     <script>
-        const socket = new WebSocket('ws://192.168.156.149:8000');
+        const socket = new WebSocket('ws://192.168.100.24:8000');
 
         socket.onmessage = function(event) {
             data = JSON.parse(event.data)
             document.getElementById('stream').src = 'data:image/jpeg;base64,' + data['img'];
-            document.getElementById('time').innerText = data['time'];
-            document.getElementById('fps').innerText = Math.floor(60 / data['time']);
-            document.getElementById('curvature').innerText = data['curvature'];
-            document.getElementById('delta').innerText = data['delta'];
+            document.getElementById('time').innerText = data['time'].toFixed(2);
+            //document.getElementById('fps').innerText = Math.floor(60 / data['time']);
+            document.getElementById('curvature').innerText = data['curvature'].toFixed(2);
+            document.getElementById('delta').innerText = data['delta'].toFixed(2);
         };
     </script>
 </body>
