@@ -25,7 +25,7 @@ def road_processor(rgb_image):
 
     rgb_image = make_bird_view(rgb_image)
 
-    points = find_candidates(rgb_image, 0, HEIGHT, 5, 2, 150, 10)
+    points = find_candidates(rgb_image, 0, HEIGHT, 5, 2, 200, 10)
     debug_image = draw_points(rgb_image, points, (255, 100, 0))
 
     max_angle_change = 40
@@ -54,5 +54,8 @@ def road_processor(rgb_image):
 
     draw_chains(debug_image, [middle_chain], point_color=(0, 20, 100), line_color=(20, 100, 0))
 
-    return avg_curvature, 0, debug_image, time.time() - start_time
+    N_TH_POINT = min(3, len(middle_chain)) - 1
+    delta = middle_chain[N_TH_POINT][0] - ROBOT_X_CENTER
+
+    return avg_curvature, delta, debug_image, time.time() - start_time
 
