@@ -32,7 +32,7 @@ def road_processor(rgb_image):
     chains = build_lane_chains(points, 65, 10, max_angle_change, 0)
 
 
-    chains, left_chain, right_chain = filter_chains_by_robot_center(chains)
+    chains, left_chain, right_chain = filter_chains_by_robot_center(chains, 50, 8)
 
     # for chain in chains:
     #     chain.sort(key=lambda pos: pos[1])
@@ -48,7 +48,7 @@ def road_processor(rgb_image):
     # if len(chains) > 0:
     #     avg_curvature /= len(chains)
 
-    middle_chain = build_middle_chain(left_chain, right_chain, 0, WIDTH, 10, HEIGHT)
+    middle_chain = build_middle_chain(left_chain, right_chain, ROBOT_X_CENTER - 100, ROBOT_X_CENTER + 100, 10, HEIGHT)
 
     draw_robot_center_marker(debug_image)
 
@@ -56,6 +56,13 @@ def road_processor(rgb_image):
 
     N_TH_POINT = min(3, len(middle_chain)) - 1
     delta = middle_chain[N_TH_POINT][0] - ROBOT_X_CENTER
+
+    # inf_delta = 1000
+    # if left_chain is None:
+    #     delta = -inf_delta
+    #
+    # if right_chain is None:
+    #     delta = inf_delta
 
     return avg_curvature, delta, debug_image, time.time() - start_time
 

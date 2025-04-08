@@ -32,7 +32,7 @@ time.sleep(1)
 motor1.on(SpeedPercent(-10))
 motor2.on(SpeedPercent(-10))
 
-# pid = PID(1.0, 0, 0, setpoint=0, sample_time=100, output_limits=(-min_max_deg, min_max_deg))
+pid = PID(1.5, 0, 0, setpoint=0, sample_time=50, output_limits=(-min_max_deg, min_max_deg))
 
 
 def move(new_angle):
@@ -49,14 +49,17 @@ try:
         response = send_redis_command("MGET delta curvature")
         delta, curvature = parse_redis_response(response)
 
-        angle = float(delta) * 2
-        print("delta received:", angle)
-        move(angle)
+        angle = -float(delta)
+        # print("delta received:", angle)
+
+        pid_value = pid.update(angle)
+        if pid_value is not None:
+            move(pid_value)
 except KeyboardInterrupt:
     print()
     print("Off motors...")
-    motor1.off()
-    motor2.off()
-    motor.off()
+    motor1.off(brake=False)
+    motor2.off(brake=False)
+    motor.off(brake=False)
     print("Bue!")
 

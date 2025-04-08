@@ -8,7 +8,7 @@ import numpy as np
 from settings import WIDTH, HEIGHT, ROBOT_X_CENTER
 
 
-def filter_chains_by_robot_center(chains):
+def filter_chains_by_robot_center(chains, y_dist_for_far, far_min_size):
     best_left_chain = None
     best_right_chain = None
     min_left_dist = float('inf')
@@ -24,6 +24,9 @@ def filter_chains_by_robot_center(chains):
 
         # Euclidean distance to robot's center reference point
         dist = np.linalg.norm(np.array(bottom_point) - np.array(robot_ref_point))
+
+        if HEIGHT - bottom_point[1] > y_dist_for_far and len(chain) < far_min_size:
+            continue
 
         if bottom_point[0] < ROBOT_X_CENTER:
             if dist < min_left_dist:
