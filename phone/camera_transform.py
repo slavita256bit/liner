@@ -37,12 +37,12 @@ def hough_transform(canny_img, rho=1, theta=np.pi/180, threshold=10, minLineLeng
 
 def make_bird_view(image):
     # pixel 5
-    x_offset = 80
-    y_offset = 80
+    # x_offset = 80
+    # y_offset = 80
 
     # note 8t
-    # x_offset = 80
-    # y_offset = 50
+    x_offset = 80
+    y_offset = 80
 
     src_points = np.float32([
         [x_offset, 0],  # Top-left corner

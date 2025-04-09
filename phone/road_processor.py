@@ -17,6 +17,7 @@ from settings import WIDTH, HEIGHT, ROBOT_X_CENTER
 
 def road_processor(rgb_image):
     start_time = time.time()
+
     # rgb_image = region_selection(rgb_image)
     # canny = cv2.Canny(gray_image, 220, 255)
     # lines = hough_transform(canny)
@@ -30,7 +31,6 @@ def road_processor(rgb_image):
 
     max_angle_change = 40
     chains = build_lane_chains(points, 65, 10, max_angle_change, 0)
-
 
     chains, left_chain, right_chain = filter_chains_by_robot_center(chains, 50, 8)
 
@@ -65,5 +65,6 @@ def road_processor(rgb_image):
     # if right_chain is None:
     #     delta = inf_delta
 
-    return avg_curvature, delta, debug_image, time.time() - start_time
+    end_time = time.time()
+    return avg_curvature, delta, debug_image, end_time - start_time
 
