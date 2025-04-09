@@ -17,7 +17,7 @@ from settings import WIDTH, HEIGHT, ROBOT_X_CENTER
 
 def road_processor(rgb_image):
     start_time = time.time()
-    rgb_image = region_selection(rgb_image)
+    # rgb_image = region_selection(rgb_image)
     # canny = cv2.Canny(gray_image, 220, 255)
     # lines = hough_transform(canny)
 
@@ -25,7 +25,7 @@ def road_processor(rgb_image):
 
     rgb_image = make_bird_view(rgb_image)
 
-    points = find_candidates(rgb_image, 0, HEIGHT, 5, 2, 200, 10)
+    points = find_candidates(rgb_image, 0, HEIGHT, 5, 2, 180, 10)
     debug_image = draw_points(rgb_image, points, (255, 100, 0))
 
     max_angle_change = 40
@@ -48,7 +48,8 @@ def road_processor(rgb_image):
     # if len(chains) > 0:
     #     avg_curvature /= len(chains)
 
-    middle_chain = build_middle_chain(left_chain, right_chain, ROBOT_X_CENTER - 100, ROBOT_X_CENTER + 100, 10, HEIGHT)
+    MAX_LANE_OFFSET = 100
+    middle_chain = build_middle_chain(left_chain, right_chain, ROBOT_X_CENTER - MAX_LANE_OFFSET, ROBOT_X_CENTER + MAX_LANE_OFFSET, 10, HEIGHT)
 
     draw_robot_center_marker(debug_image)
 

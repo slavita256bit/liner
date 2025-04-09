@@ -4,6 +4,8 @@ import time
 
 from ev3dev2.led import Leds
 from ev3dev2.motor import MediumMotor, OUTPUT_A, OUTPUT_B, OUTPUT_C, OUTPUT_D, SpeedPercent, MoveTank
+from ev3dev2.sensor.lego import UltrasonicSensor
+from ev3dev2.auto import *
 
 from pid import PID
 from redis_communication import send_redis_command, parse_redis_response
@@ -29,10 +31,12 @@ motor.off()
 start_deg = motor.degrees
 time.sleep(1)
 
-motor1.on(SpeedPercent(-10))
-motor2.on(SpeedPercent(-10))
+motor1.on(SpeedPercent(-30))
+motor2.on(SpeedPercent(-30))
 
-pid = PID(1.5, 0, 0, setpoint=0, sample_time=50, output_limits=(-min_max_deg, min_max_deg))
+pid = PID(1.3, 0, 25, setpoint=0, sample_time=50, output_limits=(-min_max_deg, min_max_deg))
+
+us = UltrasonicSensor(INPUT_4)
 
 
 def move(new_angle):
@@ -46,6 +50,8 @@ def move(new_angle):
 
 try:
     while True:
+        print(us.distance_centimeters)
+
         response = send_redis_command("MGET delta curvature")
         delta, curvature = parse_redis_response(response)
 
