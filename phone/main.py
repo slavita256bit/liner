@@ -9,24 +9,29 @@ import redis
 import websockets
 from websockets import ConnectionClosedOK, ConnectionClosedError
 
-import signs_processor
+from threaded_signs_processor import ThreadedSignsProcessor
 from settings import PHONE_IP
-from threaded_processor import ThreadedProcessor
+from threaded_road_processor import ThreadedRoadProcessor
 from threaded_camera import ThreadedCamera
 
 
 stream_fps = 30
 camera = ThreadedCamera()
-processor = ThreadedProcessor(camera)
+road_processor = ThreadedRoadProcessor(camera)
+# sign_processor = ThreadedSignsProcessor(camera)
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 print('Lets go!')
 
 async def stream(websocket):
     while True:
-        if processor.frame is not None:
-            curvature, delta, frame, time_used = processor.frame
+        if road_processor.frame is not None:
             # frame = cv2.cvtColor(processor.frame, cv2.COLOR_GRAY2BGR)
+
+            curvature, delta, frame, time_used = road_processor.frame
+            # sign_frame = sign_processor.result
+
+
             _, buffer = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
             jpg_as_text = base64.b64encode(buffer).decode('utf-8')
             if isinstance(delta, int):
@@ -57,7 +62,7 @@ async def main():
             await asyncio.Future()
     except CancelledError:
         print("Stopping...")
-        processor.stop()
+        road_processor.stop()
         camera.stop()
         print("Bue!")
 

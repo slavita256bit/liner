@@ -2,11 +2,10 @@ import time
 from threading import Thread
 
 from road_processor import road_processor
-from signs_processor import signs_processor
 from threaded_camera import ThreadedCamera
 
 
-class ThreadedProcessor:
+class ThreadedRoadProcessor:
     def __init__(self, camera: ThreadedCamera,):
         self.camera = camera
 
