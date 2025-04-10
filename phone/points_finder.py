@@ -8,7 +8,7 @@ import numpy as np
 from settings import WIDTH, HEIGHT
 
 
-def find_candidates(img, yl, yr, step, radius, color_threshold, max_x_dist):
+def find_candidates(img, yl, yr, step, radius, color_threshold, max_x_dist, black_treshold, black_radius):
     """
     Optimized candidate finder that uses a pre-blurred image to compute local average color.
 
@@ -48,6 +48,19 @@ def find_candidates(img, yl, yr, step, radius, color_threshold, max_x_dist):
         groups = np.split(candidates, np.where(diff > max_x_dist)[0] + 1)
         for group in groups:
             merged_x = int(np.mean(group))
+
+            # --- NEW: Check for nearby black pixel in original image ---
+            x_start = max(0, merged_x - black_radius)
+            x_end = min(width, merged_x + black_radius + 1)
+            y_start = max(0, y - black_radius)
+            y_end = min(height, y + black_radius + 1)
+
+            region = img[y_start:y_end, x_start:x_end]
+            # Define black as all channels below a small threshold, say 30
+            if not np.any(np.all(region < black_treshold, axis=2)):
+                continue  # No black nearby, skip this point
+            # -----------------------------------------------------------
+
             merged_points.append((merged_x, y))
 
     return merged_points

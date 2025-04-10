@@ -1,5 +1,5 @@
-PHONE_IP = '192.168.100.24'
-WEBCAM_URL = f'http://{PHONE_IP}:8080/video'
+PHONE_IP = '0.0.0.0'
+WEBCAM_URL = f'http://0.0.0.0:8080/video'
 
 WIDTH = 320
 HEIGHT = 240

@@ -26,13 +26,13 @@ def road_processor(rgb_image):
 
     rgb_image = make_bird_view(rgb_image)
 
-    points = find_candidates(rgb_image, 0, HEIGHT, 5, 2, 180, 10)
+    points = find_candidates(rgb_image, 0, HEIGHT, 5, 2, 170, 10, 150, 5)
     debug_image = draw_points(rgb_image, points, (255, 100, 0))
 
     max_angle_change = 40
-    chains = build_lane_chains(points, 65, 10, max_angle_change, 0)
+    chains = build_lane_chains(points, 65, 10, max_angle_change, 5)
 
-    chains, left_chain, right_chain = filter_chains_by_robot_center(chains, 50, 8)
+    chains, left_chain, right_chain = filter_chains_by_robot_center(chains, 50, 15)
 
     # for chain in chains:
     #     chain.sort(key=lambda pos: pos[1])
